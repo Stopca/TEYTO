@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tepic & Toronto | Dos formas de habitar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --tepic-color: #C84B31;
+            --tepic-light: #F9EBEA;
+            --toronto-color: #1D4E89;
+            --toronto-light: #EBF3FA;
+            --bg-dark: #0f172a;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f6f9;
+            color: #2b2d42;
+        }
+
+        main {
+            flex: 1 0 auto;
+            min-height: 680px;
+        }
+
+        .navbar-brand {
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .badge-tepic {
+            background-color: var(--tepic-color);
+            color: #fff;
+        }
+
+        .badge-toronto {
+            background-color: var(--toronto-color);
+            color: #fff;
+        }
+
+        .text-tepic { color: var(--tepic-color) !important; }
+        .text-toronto { color: var(--toronto-color) !important; }
+        .bg-tepic { background-color: var(--tepic-color) !important; }
+        .bg-toronto { background-color: var(--toronto-color) !important; }
+
+        .nav-pills .nav-link {
+            color: #495057;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 8px 14px;
+            margin: 2px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-pills .nav-link.active {
+            background-color: #2b2d42;
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .hero-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .hero-overlay {
+            background: radial-gradient(circle at top right, rgba(200, 75, 49, 0.25), rgba(29, 78, 137, 0.25));
+        }
+
+        .media-placeholder {
+            background-color: #1e293b;
+            color: #f8fafc;
+            border: 2px dashed #475569;
+            border-radius: 12px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .media-placeholder:hover {
+            transform: translateY(-2px);
+        }
+
+        .img-card {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            background: #fff;
+            height: 100%;
+        }
+
+        .img-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        }
+
+        .img-card img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            cursor: pointer;
+            transition: transform 0.3s ease, filter 0.3s ease;
+        }
+
+        .img-card img:hover {
+            filter: brightness(1.05);
+            transform: scale(1.03);
+        }
+
+        #leaflet-map {
+            height: 480px;
+            width: 100%;
+            border-radius: 16px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar-tepic {
+            background-color: var(--tepic-color);
+        }
+
+        .progress-bar-toronto {
+            background-color: var(--toronto-color);
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 5px solid #ccc;
+        }
+
+        .stat-tepic { border-left-color: var(--tepic-color); }
+        .stat-toronto { border-left-color: var(--toronto-color); }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+        }
+
+       .video-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            min-height: 320px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .myth-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+        }
+
+        .myth-card.revealed {
+            border-color: #198754 !important;
+            background-color: #f8fff9;
+        }
+
+        .checklist-item {
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+            border-radius: 8px;
+            padding: 10px 14px;
+        }
+
+        .checklist-item:hover {
+            background-color: rgba(0,0,0,0.03);
+        }
+
+        .checklist-item.checked {
+            text-decoration: line-through;
+            color: #6c757d;
+            background-color: #f1f3f5;
+        }
+
+        footer {
+            flex-shrink: 0;
+            background-color: #0f172a;
+            color: #cbd5e1;
+            border-top: 4px solid #1e293b;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .footer-heading {
+            color: #f8fafc;
+            font-weight: 700;
+            font-size: 1.05rem;
+            letter-spacing: 0.2px;
+        }
+
+        .footer-text {
+            color: #cbd5e1;
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+
+        .footer-link {
+            color: #94a3b8;
+            text-decoration: none;
+            transition: color 0.2s ease, text-decoration 0.2s ease;
+        }
+
+        .footer-link:hover {
+            color: #ffffff;
+            text-decoration: underline;
+        }
+
+        .footer-tech-card {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="bg-white sticky-top shadow-sm mb-4">
+        <div class="container-fluid px-4 py-3 d-flex flex-wrap align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <span class="fs-4 me-2">🇲🇽 🇨🇦</span>
+                <div>
+                    <h1 class="h4 mb-0 navbar-brand">Tepic &amp; Toronto</h1>
+                    <small class="text-muted d-none d-sm-inline" data-es="Dos formas de habitar, muchas formas de convivir" data-en="Two ways of living, many ways of coexisting">Dos formas de habitar, muchas formas de convivir</small>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                <div class="btn-group border rounded-pill p-1 bg-light" role="group">
+                    <button type="button" class="btn btn-sm rounded-pill btn-dark active" id="btn-es" onclick="setLanguage('es')">🇲🇽 ES</button>
+                    <button type="button" class="btn btn-sm rounded-pill btn-outline-dark" id="btn-en" onclick="setLanguage('en')">🇨🇦 EN</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-fluid px-4 border-top bg-light py-2">
+            <ul class="nav nav-pills flex-row flex-nowrap overflow-auto" id="mainTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="tab-0" data-bs-toggle="tab" data-bs-target="#content-0" type="button" role="tab">
+                        <i class="bi bi-house-door me-1"></i> <span data-es="0: Inicio" data-en="0: Home">0: Inicio</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-1" data-bs-toggle="tab" data-bs-target="#content-1" type="button" role="tab" onclick="fixMapResize()">
+                        <i class="bi bi-geo-alt me-1"></i> <span data-es="1: Ciudades" data-en="1: Cities">1: Ciudades</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-2" data-bs-toggle="tab" data-bs-target="#content-2" type="button" role="tab">
+                        <i class="bi bi-palette me-1"></i> <span data-es="2: Cultura" data-en="2: Culture">2: Cultura</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-3" data-bs-toggle="tab" data-bs-target="#content-3" type="button" role="tab">
+                        <i class="bi bi-camera me-1"></i> <span data-es="3: Turismo" data-en="3: Tourism">3: Tourism</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-4" data-bs-toggle="tab" data-bs-target="#content-4" type="button" role="tab">
+                        <i class="bi bi-clock-history me-1"></i> <span data-es="4: Cotidianidad" data-en="4: Daily Life">4: Cotidianidad</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-5" data-bs-toggle="tab" data-bs-target="#content-5" type="button" role="tab">
+                        <i class="bi bi-airplane me-1"></i> <span data-es="5: Viajar" data-en="5: Travel">5: Viajar</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-6" data-bs-toggle="tab" data-bs-target="#content-6" type="button" role="tab">
+                        <i class="bi bi-sliders me-1"></i> <span data-es="6: Contrastes" data-en="6: Contrasts">6: Contrastes</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-7" data-bs-toggle="tab" data-bs-target="#content-7" type="button" role="tab">
+                        <i class="bi bi-chat-quote me-1"></i> <span data-es="7: Reflexión" data-en="7: Reflection">7: Reflexión</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-8" data-bs-toggle="tab" data-bs-target="#content-8" type="button" role="tab">
+                        <i class="bi bi-book me-1"></i> <span data-es="8: Fuentes" data-en="8: Sources">8: Fuentes</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </header>
+
+    <main class="container-fluid px-4 mb-4">
+        <div class="tab-content" id="mainTabContent">
+
+            <div class="tab-pane fade show active" id="content-0" role="tabpanel">
+                <div class="hero-header p-4 p-md-5 mb-4 hero-overlay">
+                    <div class="row align-items-center">
+                        <div class="col-lg-7">
+                            <span class="badge bg-warning text-dark mb-2 fw-bold" data-es="Estudio Comparativo Urbano" data-en="Comparative Urban Study">Estudio Comparativo Urbano</span>
+                            <h2 class="display-4 fw-bold mb-3" data-es="Tepic & Toronto: Dos Horizontes" data-en="Tepic & Toronto: Two Horizons">Tepic &amp; Toronto: Dos Horizontes</h2>
+                            <p class="lead mb-4" data-es="Un recorrido interdisciplinario por el valle volcánico del Pacífico mexicano y la metrópolis cosmopolita del Lago Ontario. Dos ritmos, dos climas y una rica diversidad humana." data-en="An interdisciplinary journey through the volcanic valley of the Mexican Pacific and the cosmopolitan metropolis of Lake Ontario. Two rhythms, two climates, and rich human diversity.">Un recorrido interdisciplinario por el valle volcánico del Pacífico mexicano y la metrópolis cosmopolita del Lago Ontario. Dos ritmos, dos climas y una rica diversidad humana.</p>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-danger btn-lg rounded-pill" onclick="switchTab(1)">
+                                    <i class="bi bi-compass me-1"></i> <span data-es="Explorar Ciudades" data-en="Explore Cities">Explorar Ciudades</span>
+                                </button>
+                                <button class="btn btn-outline-light btn-lg rounded-pill" onclick="switchTab(6)">
+                                    <i class="bi bi-bar-chart me-1"></i> <span data-es="Ver Mitos & Contrastes" data-en="View Myths & Contrasts">Ver Mitos &amp; Contrastes</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-lg-5 mt-4 mt-lg-0">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <div class="img-card border-tepic border-3">
+                                        <img src="Media/tepic main hero.jpg" alt="Tepic Overview" onerror="handleMediaError(this, 'Media/tepic_hero.jpg')">
+                                        <div class="p-2 text-center bg-light">
+                                            <span class="badge badge-tepic" data-es="Tepic, Nayarit" data-en="Tepic, Nayarit">Tepic, Nayarit</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="img-card border-toronto border-3">
+                                        <img src="Media/toronto1.jpeg" alt="Toronto Skyline" onerror="handleMediaError(this, 'Media/toronto_hero.jpg')">
+                                        <div class="p-2 text-center bg-light">
+                                            <span class="badge badge-toronto" data-es="Toronto, Ontario" data-en="Toronto, Ontario">Toronto, Ontario</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-md-3">
+                        <div class="stat-card stat-tepic h-100">
+                            <i class="bi bi-geo text-tepic fs-2"></i>
+                            <h5 class="mt-2 text-muted" data-es="Ubicación Tepic" data-en="Tepic Location">Ubicación Tepic</h5>
+                            <h4 class="fw-bold" data-es="Valle de Matatipac" data-en="Matatipac Valley">Valle de Matatipac</h4>
+                            <small class="text-muted" data-es="Altitud: 915 msnm | Clima Cálido-Templado" data-en="Altitude: 915 msnm | Warm-Temperate Climate">Altitud: 915 msnm | Clima Cálido-Templado</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card stat-toronto h-100">
+                            <i class="bi bi-water text-toronto fs-2"></i>
+                            <h5 class="mt-2 text-muted" data-es="Ubicación Toronto" data-en="Toronto Location">Ubicación Toronto</h5>
+                            <h4 class="fw-bold" data-es="Lago Ontario" data-en="Lake Ontario">Lago Ontario</h4>
+                            <small class="text-muted" data-es="Altitud: 76 msnm | Clima Continental Húmedo" data-en="Altitude: 76 msnm | Humid Continental Climate">Altitud: 76 msnm | Clima Continental Húmedo</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card stat-tepic h-100">
+                            <i class="bi bi-people text-tepic fs-2"></i>
+                            <h5 class="mt-2 text-muted" data-es="Población Tepic" data-en="Tepic Population">Población Tepic</h5>
+                            <h4 class="fw-bold">~425,000 hab.</h4>
+                            <small class="text-muted" data-es="Escala urbana media y comunitaria" data-en="Medium urban & community scale">Escala urbana media y comunitaria</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card stat-toronto h-100">
+                            <i class="bi bi-building text-toronto fs-2"></i>
+                            <h5 class="mt-2 text-muted" data-es="Población Toronto" data-en="Toronto Population">Población Toronto</h5>
+                            <h4 class="fw-bold">~3,000,000 hab.</h4>
+                            <small class="text-muted" data-es="Metro GTA: 6.7 Millones | Megápolis" data-en="GTA Metro: 6.7 Million | Megapolis">Metro GTA: 6.7 Millones | Megápolis</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="content-1" role="tabpanel">
+                <div class="row g-4 mb-4">
+                    <div class="col-lg-8">
+                        <div class="card border-0 shadow-sm p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="fw-bold mb-0">
+                                    <i class="bi bi-map text-primary me-2"></i>
+                                    <span data-es="Mapa Interactivo Georreferenciado" data-en="Interactive Georeferenced Map">Mapa Interactivo Georreferenciado</span>
+                                </h4>
+                                <div>
+                                    <span class="badge badge-tepic me-1"><i class="bi bi-geo-alt-fill"></i> Tepic (#C84B31)</span>
+                                    <span class="badge badge-toronto"><i class="bi bi-geo-alt-fill"></i> Toronto (#1D4E89)</span>
+                                </div>
+                            </div>
+                            <div id="leaflet-map"></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card border-0 shadow-sm p-4 h-100">
+                            <h4 class="fw-bold mb-3" data-es="Contexto Geográfico" data-en="Geographic Context">Contexto Geográfico</h4>
+                            <div class="accordion" id="accordionGeo">
+                                <div class="accordion-item border-0 mb-2 shadow-sm">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button bg-light text-tepic fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#geoTepic">
+                                            🇲🇽 Tepic: El Cerro de San Juan
+                                        </button>
+                                    </h2>
+                                    <div id="geoTepic" class="accordion-collapse collapse show" data-bs-parent="#accordionGeo">
+                                        <div class="accordion-body text-muted">
+                                            <p data-es="Tepic está enclavada en un valle rodeado de cerros y la imponente reserva ecológica volcánica del Cerro de San Juan. Su entorno propicia vegetación exuberante y clima templado." data-en="Tepic is nestled in a valley surrounded by hills and the imposing volcanic ecological reserve of Cerro de San Juan. Its environment fosters lush vegetation and a temperate climate.">Tepic está enclavada en un valle rodeado de cerros y la imponente reserva ecológica volcánica del Cerro de San Juan. Su entorno propicia vegetación exuberante y clima templado.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item border-0 shadow-sm">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light text-toronto fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#geoToronto">
+                                            🇨🇦 Toronto: La Bahía del Lago
+                                        </button>
+                                    </h2>
+                                    <div id="geoToronto" class="accordion-collapse collapse" data-bs-parent="#accordionGeo">
+                                        <div class="accordion-body text-muted">
+                                            <p data-es="Ubicada en la orilla noroeste del Lago Ontario, Toronto se despliega sobre un terreno llano cortado por cañadas (ravines) y ríos como el Don y el Humber, conectando con los Grandes Lagos." data-en="Located on the northwestern shore of Lake Ontario, Toronto spreads across flat terrain intersected by ravines and rivers like the Don and Humber, connecting to the Great Lakes.">Ubicada en la orilla noroeste del Lago Ontario, Toronto se despliega sobre un terreno llano cortado por cañadas (ravines) y ríos como el Don y el Humber, conectando con los Grandes Lagos.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="img-card">
+                            <img src="Media/sanjuan.jpg" alt="Cerro San Juan" onerror="handleMediaError(this, 'Media/tepic_cerro_sanjuan.jpg')">
+                            <div class="p-3">
+                                <h5 class="fw-bold text-tepic">Cerro de San Juan</h5>
+                                <p class="text-muted small" data-es="Reserva Ecológica Cerro de San Juan, pulmón natural de Tepic." data-en="Cerro de San Juan Ecological Reserve, Tepic's natural lung.">Reserva Ecológica Cerro de San Juan, pulmón natural de Tepic.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="img-card">
+                            <img src="Media/matatipac.jpeg" alt="Valle de Tepic" onerror="handleMediaError(this, 'Media/tepic_valle.jpg')">
+                            <div class="p-3">
+                                <h5 class="fw-bold text-tepic">Valle de Matatipac</h5>
+                                <p class="text-muted small" data-es="Panorámica urbana del Valle de Matatipac." data-en="Panoramic urban view of the Matatipac Valley.">Panorámica urbana del Valle de Matatipac.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="img-card">
+                            <img src="Media/lagoontario.jpg" alt="Lago Ontario Toronto" onerror="handleMediaError(this, 'Media/toronto_lago_ontario.jpg')">
+                            <div class="p-3">
+                                <h5 class="fw-bold text-toronto">Lago Ontario</h5>
+                                <p class="text-muted small" data-es="Frente de agua y puerto en el Lago Ontario." data-en="Waterfront and harbour along Lake Ontario.">Frente de agua y puerto en el Lago Ontario.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="img-card">
+                            <img src="Media/torontoskyline.jpg" alt="Toronto Skyline" onerror="handleMediaError(this, 'Media/toronto_skyline.jpg')">
+                            <div class="p-3">
+                                <h5 class="fw-bold text-toronto">Toronto Skyline</h5>
+                                <p class="text-muted small" data-es="Horizonte financiero de Toronto con la CN Tower." data-en="Toronto financial skyline featuring the CN Tower.">Horizonte financiero de Toronto con la CN Tower.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="content-2" role="tabpanel">
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm p-4 h-100">
+                            <span class="badge badge-tepic w-auto align-self-start mb-2" data-es="Identidad y Raíces" data-en="Identity & Roots">Identidad y Raíces</span>
+                            <h3 class="fw-bold text-tepic" data-es="Tradición Wixárika y Mestizaje" data-en="Wixárika Tradition & Heritage">Tradición Wixárika y Mestizaje</h3>
+                            <p data-es="Tepic es la puerta de entrada a los pueblos originarios Wixárika (Huichol), Náayeri (Cora), O'dam y Au'dam. El arte sagrado de chaquira y estambre, junto a la gastronomía del mar y la sierra, definen su alma cultural." data-en="Tepic is the gateway to the Wixárika (Huichol), Náayeri (Cora), O'dam, and Au'dam indigenous communities. Sacred beadwork, yarn paintings, and sea-meets-mountain cuisine define its cultural soul.">Tepic es la puerta de entrada a los pueblos originarios Wixárika (Huichol), Náayeri (Cora), O'dam y Au'dam. El arte sagrado de chaquira y estambre, junto a la gastronomía del mar y la sierra, definen su alma cultural.</p>
+                            
+                            <div class="video-container my-3">
+                                <video controls poster="Media/cultura_tepic_gastronomia.jpg" onerror="handleVideoError(this, 'Media/cultura_tepic_wixarika.mp4')">
+                                    <source src="Media/CULTURA_WIXARIKA.mp4" type="video/mp4">
+                                </video>
+                            </div>
+
+                            <div class="img-card mt-2">
+                                <img src="Media/zarandeado.jpeg" alt="Gastronomía Tepic" onerror="handleMediaError(this, 'Media/cultura_tepic_gastronomia.jpg')">
+                                <div class="p-3">
+                                    <h6 class="fw-bold mb-1">Pescado Zarandeado</h6>
+                                    <small class="text-muted" data-es="Pescado zarandeado, sopes de ostión y pan de plátano." data-en="Grilled zarandeado fish, oyster sopes, and banana bread.">Pescado zarandeado, sopes de ostión y pan de plátano.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm p-4 h-100">
+                            <span class="badge badge-toronto w-auto align-self-start mb-2" data-es="Diversidad Global" data-en="Global Diversity">Diversidad Global</span>
+                            <h3 class="fw-bold text-toronto" data-es="Mosaico Multicultural y Festivales" data-en="Multicultural Mosaic & Festivals">Mosaico Multicultural y Festivales</h3>
+                            <p data-es="Más del 50% de la población de Toronto nació fuera de Canadá. Barrios icónicos como Chinatown, Little Italy, Greektown y Kensington Market reflejan una convivencia cosmopolita enriquecida por festivales de cine (TIFF) y artes." data-en="Over 50% of Toronto's population was born outside Canada. Iconic neighborhoods like Chinatown, Little Italy, Greektown, and Kensington Market reflect cosmopolitan harmony celebrated through film (TIFF) and arts festivals.">Más del 50% de la población de Toronto nació fuera de Canadá. Barrios icónicos como Chinatown, Little Italy, Greektown y Kensington Market reflejan una convivencia cosmopolita enriquecida por festivales de cine (TIFF) y artes.</p>
+
+                            <div class="video-container my-3">
+                                <video controls poster="Media/cultura_toronto_barrios.jpg" onerror="handleVideoError(this, 'Media/cultura_toronto_festivales.mp4')">
+                                    <source src="Media/torontowalk.mp4" type="video/mp4">
+                                </video>
+                            </div>
+
+                            <div class="img-card mt-2">
+                                <img src="Media/chinatown.webp" alt="Barrios Toronto" onerror="handleMediaError(this, 'Media/cultura_toronto_barrios.jpg')">
+                                <div class="p-3">
+                                    <h6 class="fw-bold mb-1">Barrio Chino</h6>
+                                    <small class="text-muted" data-es="Chinatown" data-en="Chinatown.">Barrio Chino.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="content-3" role="tabpanel">
+                <h3 class="fw-bold mb-4" data-es="Lugares Emblemáticos y Atractivos" data-en="Emblematic Landmarks & Attractions">Lugares Emblemáticos y Atractivos</h3>
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="img-card">
+                            <img src="Media/catedraltepic.JPG" alt="Centro Tepic" onerror="handleMediaError(this, 'Media/turismo_tepic_centro.jpg')">
+                            <div class="p-3">
+                                <span class="badge badge-tepic mb-2">Tepic</span>
+                                <h5 class="fw-bold">Catedral de Tepic</h5>
+                                <p class="text-muted small" data-es="Catedral neogótica con sus dos torres características en el centro histórico." data-en="Neo-Gothic Cathedral with iconic twin towers in the historic center.">Catedral neogótica con sus dos torres características en el centro histórico.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="img-card">
+                            <img src="Media/casamuseoamadonervo.jpg" alt="Museo Amado Nervo" onerror="handleMediaError(this, 'Media/turismo_tepic_museo.jpg')">
+                            <div class="p-3">
+                                <span class="badge badge-tepic mb-2">Tepic</span>
+                                <h5 class="fw-bold">Casa Museo Amado Nervo</h5>
+                                <p class="text-muted small" data-es="Cuna del célebre poeta nayarita, patrimonio literario colonial." data-en="Birthplace of the famous poet Amado Nervo, colonial literary heritage.">Cuna del célebre poeta nayarita, patrimonio literario colonial.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="img-card">
+                            <img src="Media/laloma.jpg" alt="Parque La Loma" onerror="handleMediaError(this, 'Media/turismo_tepic_laloma.jpg')">
+                            <div class="p-3">
+                                <span class="badge badge-tepic mb-2">Tepic</span>
+                                <h5 class="fw-bold">Parque La Loma</h5>
+                                <p class="text-muted small" data-es="Espacio recreativo tradicional con trenes de vapor históricos y áreas verdes." data-en="Traditional recreational park featuring historic steam trains and gardens.">Espacio recreativo tradicional con trenes de vapor históricos y áreas verdes.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="img-card">
+                            <img src="Media/cntower.jpg" alt="CN Tower Toronto" onerror="handleMediaError(this, 'Media/turismo_toronto_cntower.jpg')">
+                            <div class="p-3">
+                                <span class="badge badge-toronto mb-2">Toronto</span>
+                                <h5 class="fw-bold">CN Tower</h5>
+                                <p class="text-muted small" data-es="Torre de telecomunicaciones de 553m, ícono arquitectónico global." data-en="553m telecommunications tower, global architectural icon.">Torre de telecomunicaciones de 553m, ícono arquitectónico global.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="img-card">
+                            <img src="Media/rom.jpeg" alt="Royal Ontario Museum" onerror="handleMediaError(this, 'Media/turismo_toronto_rom.jpg')">
+                            <div class="p-3">
+                                <span class="badge badge-toronto mb-2">Toronto</span>
+                                <h5 class="fw-bold">Royal Ontario Museum (ROM)</h5>
+                                <p class="text-muted small" data-es="Museo de cultura universal y ciencias naturales con arquitectura 'El Cristal'." data-en="World culture and natural history museum with 'The Crystal' architecture.">Museo de cultura universal y ciencias naturales con arquitectura 'El Cristal'.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="img-card">
+                            <img src="Media/distric.webp" alt="Distillery District" onerror="handleMediaError(this, 'Media/turismo_toronto_distillery.jpg')">
+                            <div class="p-3">
+                                <span class="badge badge-toronto mb-2">Toronto</span>
+                                <h5 class="fw-bold">Distillery District</h5>
+                                <p class="text-muted small" data-es="Distrito peatonal victoriano industrial restaurado con galerías y cafés." data-en="Restored Victorian industrial pedestrian district with galleries and cafes.">Distrito peatonal victoriano industrial restaurado con galerías y cafés.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="content-4" role="tabpanel">
+                <div class="row g-4 mb-4">
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm p-4">
+                            <h4 class="fw-bold text-tepic mb-3">🇲🇽 <span data-es="Ritmo Diario en Tepic" data-en="Daily Rhythm in Tepic">Ritmo Diario en Tepic</span></h4>
+                            <p data-es="La vida transcurre con cercanía. El transporte público en combis/camiones urbanos, la caminata por el Mercado Juan Escutia y las tardes familiares en plazas caracterizan un estilo convivencial cálido." data-en="Life moves at a neighborly pace. Public transit in microbuses, walking through Juan Escutia Market, and family evenings in public plazas define a warm community lifestyle.">La vida transcurre con cercanía. El transporte público en combis/camiones urbanos, la caminata por el Mercado Juan Escutia y las tardes familiares en plazas caracterizan un estilo convivencial cálido.</p>
+                            
+                            <div class="row g-2 mt-2">
+                                <div class="col-6">
+                                    <div class="img-card">
+                                        <img src="Media/plazantigua.jpg" alt="Plaza Tepic" onerror="handleMediaError(this, 'Media/cotidiana_tepic_plaza.jpg')">
+                                        <div class="p-2 text-center small text-muted">Plaza antigua</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="img-card">
+                                        <img src="Media/mercadojuanescuitia.jpg" alt="Mercado Tepic" onerror="handleMediaError(this, 'Media/cotidiana_tepic_mercado.jpg')">
+                                        <div class="p-2 text-center small text-muted">Mercado Juan Escutia</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm p-4">
+                            <h4 class="fw-bold text-toronto mb-3">🇨🇦 <span data-es="Ritmo Diario en Toronto" data-en="Daily Rhythm in Toronto">Ritmo Diario en Toronto</span></h4>
+                            <p data-es="Una metrópolis hiperconectada por el sistema TTC (Subway, Streetcars, GO Trains) y la red subterránea PATH. El ritmo es acelerado, enfocado en productividad, eventos multiculturales y parques urbanos." data-en="A metropolis hyperconnected by TTC (Subway, Streetcars, GO Trains) and the PATH underground network. Fast-paced, productive, rich in multicultural events and waterfront parks.">Una metrópolis hiperconectada por el sistema TTC (Subway, Streetcars, GO Trains) y la red subterránea PATH. El ritmo es acelerado, enfocado en productividad, eventos multiculturales y parques urbanos.</p>
+
+                            <div class="row g-2 mt-2">
+                                <div class="col-6">
+                                    <div class="img-card">
+                                        <img src="Media/cotdiandanocturno.webp" alt="TTC Toronto" onerror="handleMediaError(this, 'Media/cotidiana_toronto_ttc.jpg')">
+                                        <div class="p-2 text-center small text-muted">Vida nocturna cotidiana</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="img-card">
+                                        <img src="Media/parqueislat.jpg" alt="High Park Toronto" onerror="handleMediaError(this, 'Media/cotidiana_toronto_park.jpg')">
+                                        <div class="p-2 text-center small text-muted">Isla Park</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm p-4">
+                    <h5 class="fw-bold mb-3" data-es="Presupuesto Diario Estimado (Comparativa)" data-en="Estimated Daily Budget (Comparison)">Presupuesto Diario Estimado (Comparativa)</h5>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span><strong>Tepic:</strong> ~$450 MXN (~$25 USD) / día</span>
+                            <span class="text-tepic fw-bold" data-es="Accesible / Económico" data-en="Accessible / Affordable">Accesible / Económico</span>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar progress-bar-tepic fw-bold" role="progressbar" style="width: 25%">$450 MXN</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span><strong>Toronto:</strong> ~$110 CAD (~$80 USD) / día</span>
+                            <span class="text-toronto fw-bold" data-es="Elevado / Cosmopolita" data-en="High-cost / Cosmopolitan">Elevado / Cosmopolita</span>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar progress-bar-toronto fw-bold" role="progressbar" style="width: 85%">$110 CAD</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="content-5" role="tabpanel">
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm p-4 h-100">
+                            <span class="badge badge-tepic w-auto align-self-start mb-2" data-es="Guía de Viaje" data-en="Travel Guide">Guía de Viaje</span>
+                            <h3 class="fw-bold text-tepic" data-es="Viajar a Tepic (TPQ)" data-en="Traveling to Tepic (TPQ)">Viajar a Tepic (TPQ)</h3>
+                            <ul class="list-unstyled mt-3">
+                                <li class="mb-2"><i class="bi bi-airplane-engines text-tepic me-2"></i> <strong>Aeropuerto:</strong> Aeropuerto Internacional de Tepic (TPQ).</li>
+                                <li class="mb-2"><i class="bi bi-sun text-tepic me-2"></i> <strong>Mejor época:</strong> Noviembre a Abril (temporada seca y fresca).</li>
+                                <li class="mb-2"><i class="bi bi-passport text-tepic me-2"></i> <strong>Requisitos:</strong> Pasaporte / Identificación oficial.</li>
+                                <li class="mb-2"><i class="bi bi-car-front text-tepic me-2"></i> <strong>Conexiones:</strong> Riviera Nayarit, San Blas, Santa María del Oro.</li>
+                            </ul>
+
+                            <div class="mt-4 p-3 bg-light rounded-3">
+                                <h6 class="fw-bold text-tepic mb-2">
+                                    <i class="bi bi-check2-square me-1"></i>
+                                    <span data-es="Checklist Viajero Tepic" data-en="Tepic Traveler Checklist">Checklist Viajero Tepic</span>
+                                    <span class="badge bg-secondary ms-2" id="check-count-tepic">0/4</span>
+                                </h6>
+                                <div class="d-flex flex-column gap-1">
+                                    <div class="checklist-item" onclick="toggleChecklist(this, 'tepic')">
+                                        <i class="bi bi-square me-2 text-muted"></i>
+                                        <span data-es="Probar el pan de plátano y sopes de ostión" data-en="Try banana bread and oyster sopes">Probar el pan de plátano y sopes de ostión</span>
+                                    </div>
+                                    <div class="checklist-item" onclick="toggleChecklist(this, 'tepic')">
+                                        <i class="bi bi-square me-2 text-muted"></i>
+                                        <span data-es="Subir a la mirador del Cerro de San Juan" data-en="Hike to Cerro de San Juan viewpoint">Subir a la mirador del Cerro de San Juan</span>
+                                    </div>
+                                    <div class="checklist-item" onclick="toggleChecklist(this, 'tepic')">
+                                        <i class="bi bi-square me-2 text-muted"></i>
+                                        <span data-es="Adquirir artesanía auténtica Wixárika" data-en="Buy authentic Wixárika handicrafts">Adquirir artesanía auténtica Wixárika</span>
+                                    </div>
+                                    <div class="checklist-item" onclick="toggleChecklist(this, 'tepic')">
+                                        <i class="bi bi-square me-2 text-muted"></i>
+                                        <span data-es="Visitar la Catedral y el Museo Amado Nervo" data-en="Visit the Cathedral and Amado Nervo Museum">Visitar la Catedral y el Museo Amado Nervo</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                           
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm p-4 h-100">
+                            <span class="badge badge-toronto w-auto align-self-start mb-2" data-es="Guía de Viaje" data-en="Travel Guide">Guía de Viaje</span>
+                            <h3 class="fw-bold text-toronto" data-es="Viajar a Toronto (YYZ)" data-en="Traveling to Toronto (YYZ)">Viajar a Toronto (YYZ)</h3>
+                            <ul class="list-unstyled mt-3">
+                                <li class="mb-2"><i class="bi bi-airplane-engines text-toronto me-2"></i> <strong>Aeropuerto:</strong> Toronto Pearson International Airport (YYZ).</li>
+                                <li class="mb-2"><i class="bi bi-snow text-toronto me-2"></i> <strong>Mejor época:</strong> Mayo a Septiembre (verano cálido y templado).</li>
+                                <li class="mb-2"><i class="bi bi-shield-check text-toronto me-2"></i> <strong>Requisitos:</strong> eTA (Autorización Electrónica) o Visa.</li>
+                                <li class="mb-2"><i class="bi bi-train-front text-toronto me-2"></i> <strong>Conexiones:</strong> Tren UP Express directo a Union Station.</li>
+                            </ul>
+
+                            <div class="mt-4 p-3 bg-light rounded-3">
+                                <h6 class="fw-bold text-toronto mb-2">
+                                    <i class="bi bi-check2-square me-1"></i>
+                                    <span data-es="Checklist Viajero Toronto" data-en="Toronto Traveler Checklist">Checklist Viajero Toronto</span>
+                                    <span class="badge bg-secondary ms-2" id="check-count-toronto">0/4</span>
+                                </h6>
+                                <div class="d-flex flex-column gap-1">
+                                    <div class="checklist-item" onclick="toggleChecklist(this, 'toronto')">
+                                        <i class="bi bi-square me-2 text-muted"></i>
+                                        <span data-es="Obtener la tarjeta PRESTO para el transporte TTC" data-en="Get a PRESTO card for TTC transit">Obtener la tarjeta PRESTO para el transporte TTC</span>
+                                    </div>
+                                    <div class="checklist-item" onclick="toggleChecklist(this, 'toronto')">
+                                        <i class="bi bi-square me-2 text-muted"></i>
+                                        <span data-es="Subir al mirador de la CN Tower" data-en="Go up to the CN Tower observation deck">Subir al mirador de la CN Tower</span>
+                                    </div>
+                                    <div class="checklist-item" onclick="toggleChecklist(this, 'toronto')">
+                                        <i class="bi bi-square me-2 text-muted"></i>
+                                        <span data-es="Tomar el ferry a Toronto Islands" data-en="Take the ferry to Toronto Islands">Tomar el ferry a Toronto Islands</span>
+                                    </div>
+                                    <div class="checklist-item" onclick="toggleChecklist(this, 'toronto')">
+                                        <i class="bi bi-square me-2 text-muted"></i>
+                                        <span data-es="Probar un peameal bacon sandwich en St. Lawrence" data-en="Try a peameal bacon sandwich at St. Lawrence">Probar un peameal bacon sandwich en St. Lawrence</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="content-6" role="tabpanel">
+                <div class="mb-4">
+                    <h3 class="fw-bold mb-2" data-es="Mitos vs. Realidades (Interactivo)" data-en="Myths vs. Reality (Interactive)">Mitos vs. Realidades (Interactivo)</h3>
+                    <p class="text-muted" data-es="Haz clic en cualquier tarjeta para desmentir prejuicios y descubrir la realidad sociocultural de cada ciudad." data-en="Click on any card to debunk myths and discover the sociocultural reality of each city.">Haz clic en cualquier tarjeta para desmentir prejuicios y descubrir la realidad sociocultural de cada ciudad.</p>
+                    
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="myth-card p-4 shadow-sm border border-secondary border-opacity-25" onclick="toggleMythCard(this)">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-warning text-dark fw-bold myth-badge" data-es="MITO #1 (Tepic)" data-en="MYTH #1 (Tepic)">MITO #1 (Tepic)</span>
+                                    <small class="text-primary fw-bold myth-action-txt" data-es="Toca para revelar 👆" data-en="Tap to reveal 👆">Toca para revelar 👆</small>
+                                </div>
+                                <h5 class="fw-bold text-dark mb-2" data-es="«Tepic es solo un punto de paso sin atractivo cultural propio.»" data-en="«Tepic is just a pass-through point with no cultural appeal of its own.»">«Tepic es solo un punto de paso sin atractivo cultural propio.»</h5>
+                                <div class="myth-answer d-none mt-3 p-3 bg-light rounded-3 border-start border-4 border-success">
+                                    <span class="badge bg-success mb-2" data-es="REALIDAD" data-en="REALITY">REALIDAD</span>
+                                    <p class="mb-0 text-dark small" data-es="¡Falso! Tepic es una capital con viva Herencia Wixárika, museos virreinales, el histórico Parque La Loma y una gastronomía galardonada a nivel nacional." data-en="False! Tepic is a capital rich in Wixárika heritage, viceregal museums, historic La Loma park, and nationally recognized gastronomy.">¡Falso! Tepic es una capital con viva Herencia Wixárika, museos virreinales, el histórico Parque La Loma y una gastronomía galardonada a nivel nacional.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="myth-card p-4 shadow-sm border border-secondary border-opacity-25" onclick="toggleMythCard(this)">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-warning text-dark fw-bold myth-badge" data-es="MITO #2 (Toronto)" data-en="MYTH #2 (Toronto)">MITO #2 (Toronto)</span>
+                                    <small class="text-primary fw-bold myth-action-txt" data-es="Toca para revelar 👆" data-en="Tap to reveal 👆">Toca para revelar 👆</small>
+                                </div>
+                                <h5 class="fw-bold text-dark mb-2" data-es="«Toronto es una metrópolis fría e impersonal sin identidad local.»" data-en="«Toronto is a cold, impersonal metropolis with no local identity.»">«Toronto es una metrópolis fría e impersonal sin identidad local.»</h5>
+                                <div class="myth-answer d-none mt-3 p-3 bg-light rounded-3 border-start border-4 border-success">
+                                    <span class="badge bg-success mb-2" data-es="REALIDAD" data-en="REALITY">REALIDAD</span>
+                                    <p class="mb-0 text-dark small" data-es="¡Falso! Su identidad radica en ser el 'mosaico del mundo': un tejido de vecindarios vibrantes donde se celebran más de 200 orígenes étnicos en armonía." data-en="False! Its identity lies in being the 'world's mosaic': a fabric of vibrant neighborhoods celebrating over 200 ethnic origins in harmony.">¡Falso! Su identidad radica en ser el 'mosaico del mundo': un tejido de vecindarios vibrantes donde se celebran más de 200 orígenes étnicos en armonía.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="myth-card p-4 shadow-sm border border-secondary border-opacity-25" onclick="toggleMythCard(this)">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-warning text-dark myth-badge" data-es="MITO #3 (Clima)" data-en="MYTH #3 (Climate)">MITO #3 (Clima)</span>
+                                    <small class="text-primary fw-bold myth-action-txt" data-es="Toca para revelar 👆" data-en="Tap to reveal 👆">Toca para revelar 👆</small>
+                                </div>
+                                <h5 class="fw-bold text-dark mb-2" data-es="«El clima en Tepic es sofocante durante todo el año.»" data-en="«The climate in Tepic is stifling hot all year round.»">«El clima en Tepic es sofocante durante todo el año.»</h5>
+                                <div class="myth-answer d-none mt-3 p-3 bg-light rounded-3 border-start border-4 border-success">
+                                    <span class="badge bg-success mb-2" data-es="REALIDAD" data-en="REALITY">REALIDAD</span>
+                                    <p class="mb-0 text-dark small" data-es="¡Incorrecto! Al encontrarse a 915 msnm rodeada de valles y bosques, Tepic posee mañanas y noches frescas la mayor parte del año." data-en="Incorrect! Located at 915 meters above sea level surrounded by valleys and forests, Tepic enjoys cool mornings and evenings most of the year.">¡Incorrecto! Al encontrarse a 915 msnm rodeada de valles y bosques, Tepic posee mañanas y noches frescas la mayor parte del año.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="myth-card p-4 shadow-sm border border-secondary border-opacity-25" onclick="toggleMythCard(this)">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-warning text-dark myth-badge" data-es="MITO #4 (Idiomas)" data-en="MYTH #4 (Languages)">MITO #4 (Idiomas)</span>
+                                    <small class="text-primary fw-bold myth-action-txt" data-es="Toca para revelar 👆" data-en="Tap to reveal 👆">Toca para revelar 👆</small>
+                                </div>
+                                <h5 class="fw-bold text-dark mb-2" data-es="«En Toronto solo se habla inglés en el ámbito público.»" data-en="«In Toronto only English is spoken in public spaces.»">«En Toronto solo se habla inglés en el ámbito público.»</h5>
+                                <div class="myth-answer d-none mt-3 p-3 bg-light rounded-3 border-start border-4 border-success">
+                                    <span class="badge bg-success mb-2" data-es="REALIDAD" data-en="REALITY">REALIDAD</span>
+                                    <p class="mb-0 text-dark small" data-es="¡Falso! El 45% de los residentes habla una primera lengua distinta al inglés o francés, y los anuncios de servicios públicos están en múltiples idiomas." data-en="False! 45% of residents speak a primary language other than English or French, and public service notices appear in multiple languages.">¡Falso! El 45% de los residentes habla una primera lengua distinta al inglés o francés, y los anuncios de servicios públicos están en múltiples idiomas.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm p-4">
+                    <h4 class="fw-bold mb-3" data-es="Tabla Comparativa de Indicadores Urbanos" data-en="Urban Indicators Comparative Table">Tabla Comparativa de Indicadores Urbanos</h4>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th scope="col" data-es="Indicador" data-en="Indicator">Indicador</th>
+                                    <th scope="col" class="text-tepic">Tepic, Nayarit 🇲🇽</th>
+                                    <th scope="col" class="text-toronto">Toronto, Ontario 🇨🇦</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="fw-bold" data-es="Clima Predominante" data-en="Predominant Climate">Clima Predominante</td>
+                                    <td>Cálido subhúmedo / Templado (18°C - 31°C)</td>
+                                    <td>Continental húmedo (-10°C a 27°C)</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold" data-es="Densidad Poblacional" data-en="Population Density">Densidad Poblacional</td>
+                                    <td>Media (~2,100 hab/km²)</td>
+                                    <td>Alta (~4,330 hab/km²)</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold" data-es="Idioma Principal" data-en="Primary Language">Idioma Principal</td>
+                                    <td>Español (Lenguas originarias: Wixárika, Náayeri)</td>
+                                    <td>Inglés (Multilingüe: +160 idiomas spoken)</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold" data-es="Movilidad Principal" data-en="Primary Mobility">Movilidad Principal</td>
+                                    <td>Autobús urbano, Combis, Auto vehicular</td>
+                                    <td>Metro, Tranvía, GO Transit, Red Bicicletas</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold" data-es="Entorno Natural" data-en="Natural Surrounding">Entorno Natural</td>
+                                    <td>Valle volcánico, Cerro San Juan, Ríos</td>
+                                    <td>Lago Ontario, Cañadas (Ravines), Islas</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="content-7" role="tabpanel">
+                <div class="card border-0 shadow-sm p-4 mb-4">
+                    <h3 class="fw-bold mb-3 text-dark" data-es="Reflexión: Dos Formas de Habitar" data-en="Reflection: Two Ways of Living">Reflexión: Dos Formas de Habitar</h3>
+                    <blockquote class="blockquote border-start border-4 border-danger ps-3 my-3">
+                        <p class="fs-5" data-es="«El tamaño de una ciudad no determina la profundidad de su sentido de comunidad. Mientras Toronto enseña al mundo sobre la integración global y el dinamismo vertical, Tepic demuestra el valor inestimable de la cercanía humana, la paciencia del paisaje y la identidad arraigada.»" data-en="«The size of a city does not dictate the depth of its sense of community. While Toronto teaches the world about global integration and vertical dynamism, Tepic demonstrates the priceless value of human closeness, natural patience, and deeply rooted identity.»">«El tamaño de una ciudad no determina la profundidad de su sentido de comunidad. Mientras Toronto enseña al mundo sobre la integración global y el dinamismo vertical, Tepic demuestra el valor inestimable de la cercanía humana, la paciencia del paisaje y la identidad arraigada.»</p>
+                    </blockquote>
+
+                    <div class="mt-4 p-3 bg-light rounded-3">
+                        <h5 class="fw-bold" data-es="Espacio de Notas del Usuario" data-en="User Reflection Notes">Espacio de Notas del Usuario</h5>
+                        <textarea class="form-control" rows="4" placeholder="Escribe tus propias comparaciones o notas sobre Tepic y Toronto..." data-es-placeholder="Escribe tus observaciones aquí..." data-en-placeholder="Write your observations here..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="content-8" role="tabpanel">
+                <div class="card border-0 shadow-sm p-4 mb-4">
+                    <h3 class="fw-bold mb-3" data-es="Fuentes y Referencias" data-en="Sources & References">Fuentes y Referencias</h3>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="p-3 border rounded bg-white">
+                                <h6 class="fw-bold text-tepic">INEGI &amp; Gobierno de Nayarit</h6>
+                                <p class="small text-muted mb-1" data-es="Datos demográficos, cartográficos y socioculturales del municipio de Tepic." data-en="Demographic, cartographic, and sociocultural data for Tepic municipality.">Datos demográficos, cartográficos y socioculturales del municipio de Tepic.</p>
+                                <a href="https://www.inegi.org.mx" target="_blank" rel="noopener" class="small text-decoration-none">www.inegi.org.mx</a>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 border rounded bg-white">
+                                <h6 class="fw-bold text-toronto">Statistics Canada &amp; City of Toronto</h6>
+                                <p class="small text-muted mb-1" data-es="Estadísticas de población, diversidad cultural y datos socioeconómicos de Toronto." data-en="Population, cultural diversity, and economic stats for Toronto.">Estadísticas de población, diversidad cultural y datos socioeconómicos de Toronto.</p>
+                                <a href="https://www.toronto.ca" target="_blank" rel="noopener" class="small text-decoration-none">www.toronto.ca</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="py-5 px-4">
+        <div class="container-fluid max-w-7xl">
+            <div class="row g-4 text-start mb-4">
+                <div class="col-md-4">
+                    <h6 class="footer-heading mb-3" data-es="Sobre el Proyecto" data-en="About the Project">Sobre el Proyecto</h6>
+                    <p class="footer-text mb-0" data-es="Una plataforma educativa e interactiva diseñada para comparar modos de vida, cultura, economía y geografía urbana entre Tepic (México) y Toronto (Canadá)." data-en="An interactive educational platform designed to compare lifestyles, culture, economy, and urban geography between Tepic (Mexico) and Toronto (Canada).">Una plataforma educativa e interactiva diseñada para comparar modos de vida, cultura, economía y geografía urbana entre Tepic (México) y Toronto (Canadá).</p>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="footer-heading mb-3" data-es="Navegación Rápida" data-en="Quick Navigation">Navegación Rápida</h6>
+                    <ul class="list-unstyled footer-text mb-0 d-flex flex-column gap-2">
+                        <li><a href="#" onclick="switchTab(1); return false;" class="footer-link" data-es="1: Mapa y Ciudades" data-en="1: Map & Cities">1: Mapa y Ciudades</a></li>
+                        <li><a href="#" onclick="switchTab(2); return false;" class="footer-link" data-es="2: Herencia y Cultura" data-en="2: Heritage & Culture">2: Herencia y Cultura</a></li>
+                        <li><a href="#" onclick="switchTab(6); return false;" class="footer-link" data-es="6: Mitos y Contrastes" data-en="6: Myths & Contrasts">6: Mitos y Contrastes</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="footer-heading mb-3" data-es="Identidad de Proyecto" data-en="Project Identity">Identidad de Proyecto</h6>
+                    <div class="d-flex gap-2 flex-wrap mb-2">
+                        <span class="badge badge-tepic p-2 fs-6">Tepic #C84B31</span>
+                        <span class="badge badge-toronto p-2 fs-6">Toronto #1D4E89</span>
+                    </div>
+                    <small class="footer-text d-block" data-es="Enfoque de competencia global y sensibilidad intercultural." data-en="Focus on global competence and intercultural sensitivity.">Enfoque de competencia global y sensibilidad intercultural.</small>
+                </div>
+            </div>
+
+            <div class="text-center pt-3 border-top border-secondary border-opacity-50">
+                <button class="btn btn-sm btn-outline-light mb-3 rounded-pill px-3 py-1" type="button" data-bs-toggle="collapse" data-bs-target="#footerTech">
+                    <i class="bi bi-code-slash me-1"></i> <span data-es="Detalles Técnicos y Licencia" data-en="Technical Details & License">Detalles Técnicos y Licencia</span>
+                </button>
+                <div class="collapse" id="footerTech">
+                    <div class="card card-body footer-tech-card text-start small mb-3">
+                        <p class="mb-1"><strong>Stack:</strong> HTML5, CSS3, JavaScript (ES6+), Bootstrap 5.3.2, Leaflet.js 1.9.4, Bootstrap Icons.</p>
+                        <p class="mb-1"><strong>Color Palette:</strong> Terracotta (#C84B31) &amp; Lake Blue (#1D4E89) over Slate (#0f172a).</p>
+                        <p class="mb-0"><strong>Design Concept:</strong> Interactive Bilingual Urban Comparison Matrix with Myth Reveal Engine and Layout Anchor Locking.</p>
+                    </div>
+                </div>
+                <p class="mb-0 footer-text text-center small">&copy; 2026 Tepic &amp; Toronto Study Project. <span data-es="Todos los derechos reservados." data-en="All rights reserved.">Todos los derechos reservados.</span></p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content bg-dark text-white border-0 shadow-lg">
+                <div class="modal-header border-0 pb-0 d-flex justify-content-between align-items-center">
+                    <h5 class="modal-title fs-6 text-light" id="imageModalTitle"></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center p-3">
+                    <img id="imageModalSrc" src="" class="img-fluid rounded shadow" alt="Inspection Preview" style="max-height: 75vh; object-fit: contain;">
+                    <p id="imageModalCaption" class="mt-3 text-light opacity-75 small mb-0 px-2"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        let currentLang = 'es';
+        let leafletMap = null;
+        let tepicMarker = null;
+        let torontoMarker = null;
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.getElementById('btn-es').classList.toggle('active', lang === 'es');
+            document.getElementById('btn-es').classList.toggle('btn-dark', lang === 'es');
+            document.getElementById('btn-es').classList.toggle('btn-outline-dark', lang !== 'es');
+            
+            document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+            document.getElementById('btn-en').classList.toggle('btn-dark', lang === 'en');
+            document.getElementById('btn-en').classList.toggle('btn-outline-dark', lang !== 'en');
+
+            document.querySelectorAll('[data-es]').forEach(el => {
+                const txt = el.getAttribute(`data-${lang}`);
+                if (txt) el.textContent = txt;
+            });
+
+            document.querySelectorAll('[data-es-placeholder]').forEach(el => {
+                const placeholderTxt = el.getAttribute(`data-${lang}-placeholder`);
+                if (placeholderTxt) el.placeholder = placeholderTxt;
+            });
+
+            if (tepicMarker && torontoMarker) {
+                if (lang === 'en') {
+                    tepicMarker.setPopupContent("<b>Tepic, Nayarit 🇲🇽</b><br>Matatipac Valley<br>Altitude: 915m");
+                    torontoMarker.setPopupContent("<b>Toronto, Ontario 🇨🇦</b><br>Lake Ontario<br>Altitude: 76m");
+                } else {
+                    tepicMarker.setPopupContent("<b>Tepic, Nayarit 🇲🇽</b><br>Valle de Matatipac<br>Altitud: 915m");
+                    torontoMarker.setPopupContent("<b>Toronto, Ontario 🇨🇦</b><br>Lago Ontario<br>Altitud: 76m");
+                }
+            }
+        }
+
+        function switchTab(index) {
+            const tabEl = document.getElementById(`tab-${index}`);
+            if (tabEl) {
+                const tab = new bootstrap.Tab(tabEl);
+                tab.show();
+                if (index === 1) {
+                    fixMapResize();
+                }
+            }
+        }
+
+        function handleMediaError(imgElement, filePath) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'media-placeholder';
+            wrapper.innerHTML = `
+                <i class="bi bi-image fs-1 mb-2 text-warning"></i>
+                <div class="fw-bold mb-1">${filePath}</div>
+                <small class="text-muted">[ Archivo de imagen local / Local image file ]</small>
+            `;
+            if (imgElement && imgElement.parentNode) {
+                imgElement.parentNode.replaceChild(wrapper, imgElement);
+            }
+        }
+
+        function handleVideoError(videoElement, filePath) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'media-placeholder';
+            wrapper.innerHTML = `
+                <i class="bi bi-film fs-1 mb-2 text-info"></i>
+                <div class="fw-bold mb-1">${filePath}</div>
+                <small class="text-muted">[ Archivo de video local / Local video file ]</small>
+            `;
+            if (videoElement && videoElement.parentNode) {
+                videoElement.parentNode.replaceChild(wrapper, videoElement);
+            }
+        }
+
+        function toggleMythCard(cardEl) {
+            const answerEl = cardEl.querySelector('.myth-answer');
+            const actionTxtEl = cardEl.querySelector('.myth-action-txt');
+            const badgeEl = cardEl.querySelector('.myth-badge');
+            
+            if (answerEl.classList.contains('d-none')) {
+                answerEl.classList.remove('d-none');
+                cardEl.classList.add('revealed');
+                if (actionTxtEl) actionTxtEl.textContent = currentLang === 'es' ? 'Ocultar realidad 👇' : 'Hide reality 👇';
+                if (badgeEl) {
+                    badgeEl.classList.remove('bg-warning', 'text-dark');
+                    badgeEl.classList.add('bg-success', 'text-white');
+                }
+            } else {
+                answerEl.classList.add('d-none');
+                cardEl.classList.remove('revealed');
+                if (actionTxtEl) actionTxtEl.textContent = currentLang === 'es' ? 'Toca para revelar 👆' : 'Tap to reveal 👆';
+                if (badgeEl) {
+                    badgeEl.classList.remove('bg-success', 'text-white');
+                    badgeEl.classList.add('bg-warning', 'text-dark');
+                }
+            }
+        }
+
+        function toggleChecklist(itemEl, city) {
+            const iconEl = itemEl.querySelector('i');
+            const isChecked = itemEl.classList.contains('checked');
+
+            if (isChecked) {
+                itemEl.classList.remove('checked');
+                iconEl.className = 'bi bi-square me-2 text-muted';
+            } else {
+                itemEl.classList.add('checked');
+                iconEl.className = 'bi bi-check-square-fill me-2 text-success';
+            }
+
+            const parentCard = itemEl.closest('.card');
+            const checkedCount = parentCard.querySelectorAll('.checklist-item.checked').length;
+            const totalCount = parentCard.querySelectorAll('.checklist-item').length;
+            const counterEl = document.getElementById(`check-count-${city}`);
+            if (counterEl) {
+                counterEl.textContent = `${checkedCount}/${totalCount}`;
+                if (checkedCount === totalCount) {
+                    counterEl.className = 'badge bg-success ms-2';
+                } else {
+                    counterEl.className = 'badge bg-secondary ms-2';
+                }
+            }
+        }
+
+        function initMap() {
+            if (leafletMap) return;
+
+            leafletMap = L.map('leaflet-map').setView([30.0, -90.0], 4);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(leafletMap);
+
+            const tepicIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: "<div style='background-color:#C84B31;width:24px;height:24px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px rgba(0,0,0,0.4);'></div>",
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+            });
+
+            const torontoIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: "<div style='background-color:#1D4E89;width:24px;height:24px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px rgba(0,0,0,0.4);'></div>",
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+            });
+
+            tepicMarker = L.marker([21.504, -104.894], {icon: tepicIcon}).addTo(leafletMap);
+            tepicMarker.bindPopup("<b>Tepic, Nayarit 🇲🇽</b><br>Valle de Matatipac<br>Altitud: 915m");
+
+            torontoMarker = L.marker([43.6532, -79.3832], {icon: torontoIcon}).addTo(leafletMap);
+            torontoMarker.bindPopup("<b>Toronto, Ontario 🇨🇦</b><br>Lago Ontario<br>Altitud: 76m");
+
+            const group = new L.featureGroup([tepicMarker, torontoMarker]);
+            leafletMap.fitBounds(group.getBounds().pad(0.3));
+        }
+
+        function fixMapResize() {
+            setTimeout(() => {
+                if (!leafletMap) {
+                    initMap();
+                } else {
+                    leafletMap.invalidateSize();
+                }
+            }, 250);
+        }
+
+        function openImageModal(imgEl) {
+            if (!imgEl || !imgEl.src) return;
+            const modalImg = document.getElementById('imageModalSrc');
+            const modalTitle = document.getElementById('imageModalTitle');
+            const modalCaption = document.getElementById('imageModalCaption');
+            
+            modalImg.src = imgEl.src;
+            modalTitle.textContent = imgEl.alt || (currentLang === 'es' ? 'Vista previa' : 'Preview');
+            
+            const card = imgEl.closest('.img-card');
+            const captionEl = card ? card.querySelector('.p-2, .p-3') : null;
+            modalCaption.textContent = captionEl ? captionEl.innerText : (imgEl.alt || '');
+            
+            const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+            imageModal.show();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            document.addEventListener('click', (e) => {
+                const img = e.target.closest('img');
+                if (img && img.id !== 'imageModalSrc' && !img.closest('.modal')) {
+                    openImageModal(img);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
